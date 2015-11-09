@@ -67,6 +67,9 @@ DoExploration <- function(df){
   print(qplot(df$SALE.DATE))
   print(qplot(df[df$SALE.PRICE.N < 1000000, 'SALE.PRICE.N'], binwidth = 10000)  )
   print(qplot(df[df$SALE.PRICE.N >= 1000000, 'SALE.PRICE.N'], binwidth = 1000000)  )
+
+  
+
 }
 
 DoNeighborhoodComparisons <- function(df){
@@ -187,23 +190,107 @@ DoReport <- function(df){
                        "02  TWO FAMILY HOMES", 
                        "03  THREE FAMILY HOMES", 
                        "04  TAX CLASS 1 CONDOS", 
-                       "07  RENTALS - WALKUP APARTMENTS", 
-                       "08  RENTALS - ELEVATOR APARTMENTS", 
                        "09  COOPS - WALKUP APARTMENTS", 
                        "10  COOPS - ELEVATOR APARTMENTS", 
-                       "11A CONDO-RENTALS", 
                        "12  CONDOS - WALKUP APARTMENTS", 
                        "13  CONDOS - ELEVATOR APARTMENTS", 
-                       "14  RENTALS - 4-10 UNIT", 
                        "15  CONDOS - 2-10 UNIT RESIDENTIAL", 
                        "16  CONDOS - 2-10 UNIT WITH COMMERCIAL UNIT", 
                        "17  CONDOPS"
   )
   
-  df2 <- df[df$BUILDING.CLASS.CATEGORY %in% bldgClassToKeep, ]
+  homes <- c("01  ONE FAMILY HOMES", 
+             "02  TWO FAMILY HOMES", 
+             "03  THREE FAMILY HOMES")
+  
+  condos <- c("04  TAX CLASS 1 CONDOS", 
+              "12  CONDOS - WALKUP APARTMENTS", 
+              "13  CONDOS - ELEVATOR APARTMENTS", 
+              "15  CONDOS - 2-10 UNIT RESIDENTIAL", 
+              "16  CONDOS - 2-10 UNIT WITH COMMERCIAL UNIT", 
+              "17  CONDOPS")
+  
+  ## I'm going to split my models into homes and condos. 
+  
+  ## For each, keep homes/condos that have a non-zero footage and cost more than $100. 
+  df2.homes <- df[df$BUILDING.CLASS.CATEGORY %in% homes, ]
+  df2.homes <- df2.homes[which(df2.homes$GROSS.SQUARE.FEET > 0 & 
+                                 df2.homes$LAND.SQUARE.FEET > 0), ]
+  df2.homes <- df2.homes[df2.homes$SALE.PRICE.N > 100, ]
+  ## 292 homes. 
+  
+  ## Turns out, we can't do this because Condos are reported as having 0 sq ft. 
+  df2.condos <- df[df$BUILDING.CLASS.CATEGORY %in% condos, ]
+  df2.condos <- df2.condos[which(df2.condos$LAND.SQUARE.FEET > 0), ]
+  df2.condos <- df2.condos[df2.condos$SALE.PRICE.N > 100, ]
+  
+  ## Is SalePrice predicted by GrossSqFeet?
+  model1 <- lm(log(SALE.PRICE.N) ~ log(GROSS.SQUARE.FEET), data = df2.homes)
+  summary(model1)    ## R^2 is 0.2
+  plot(log(df2.homes$GROSS.SQUARE.FEET), log(df2.homes$SALE.PRICE.N))
+  abline(model1, col = 'red', lwd = 2)
+  plot(resid(model1))
+
+  ## Adding in Neighborhood gives it a good boost (adding land sqft too, but that's not giving the boost)
+  model2 <- lm(log(SALE.PRICE.N) ~ log(GROSS.SQUARE.FEET) + 
+                 log(LAND.SQUARE.FEET) + 
+                 NEIGHBORHOOD, 
+               data = df2.homes)
+  summary(model2) ## R^2 is 0.7
+  plot(resid(model2))
+  
+  ## Setting the intercept to 0
+  model2a <- lm(log(SALE.PRICE.N) ~ 0 + log(GROSS.SQUARE.FEET) + 
+                  log(LAND.SQUARE.FEET) + 
+                  NEIGHBORHOOD, 
+                data = df2.homes)
+  summary(model2a) ## R^2 is 0.9984
+  plot(resid(model2a))
   
   
+  ## With Building Type
+  model3 <- lm(log(SALE.PRICE.N) ~ 0 + log(GROSS.SQUARE.FEET) + 
+                 log(LAND.SQUARE.FEET) + 
+                 NEIGHBORHOOD + 
+                 BUILDING.CLASS.CATEGORY, 
+               data = df2.homes)
+  summary(model3) ## R^2 is .9984
+  plot(resid(model3)) 
   
+  ## With Building Type but not Neighborhood
+  model3a <- lm(log(SALE.PRICE.N) ~ 0 + log(GROSS.SQUARE.FEET) + 
+                 log(LAND.SQUARE.FEET) + 
+                 BUILDING.CLASS.CATEGORY, 
+               data = df2.homes)
+  summary(model3a) ## (makes model a little worse)
+  plot(resid(model3a)) 
+  
+  ## Building type AND Neighborhood
+  model4 <- lm(log(SALE.PRICE.N) ~ 0 + log(GROSS.SQUARE.FEET) + 
+                 log(LAND.SQUARE.FEET) + 
+                 NEIGHBORHOOD * BUILDING.CLASS.CATEGORY, 
+               data = df2.homes)
+  summary(model4)
+  plot(resid(model4))
+
 }
 
+
+Stuff <- function(){
+  
+  
+  ## Questions I don't know the answer to and am making assumptions about: 
+  #' What does it mean for SALE.PRICE to be 0? 
+  #'   -- I'm assuming it's not a true sale, so I'm going to exclude those rows
+  #' 
+  
+  ## Sale price has to be more than $100. Leaves about 16K records
+  df2 <- df2[df2$SALE.PRICE.N > 100, ]
+  df2 <- df2[df2$SALE.PRICE.N < 10000000, ]
+  df2 <- df2[df2$LAND.SQUARE.FEET < 5000, ]
+  df2 <- df2[df2$TOTAL.UNITS < 25,]
+  ## Dunno what LAND.SQUARE.FEET is; Most entries are 0. 
+  ## Same with GROSS.SQUARE.FEET
+  ## What's the relationship between ZIP and NEIGHBORHOOD?
+}
 
