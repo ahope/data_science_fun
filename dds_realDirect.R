@@ -35,38 +35,38 @@ LoadData <- function(folder = data_folder, file = data_file){
   df$SALE.DATE <- as.Date(df$SALE.DATE)
   df$BUILDING.CLASS.CATEGORY <- as.factor(trim(df$BUILDING.CLASS.CATEGORY))
   ## Should BLOCK and LOT be factors? Not sure what they are... 
-#   df$BLOCK <- as.factor(df$BLOCK)
-#   df$LOT <- as.factor(df$LOT)
+  df$BLOCK <- as.factor(df$BLOCK)
+  df$LOT <- as.factor(df$LOT)
   
   return(df)
 }
 
 DoExploration <- function(df){
   
-  qplot(df$NEIGHBORHOOD)
-  qplot(df$BUILDING.CLASS.CATEGORY) 
-  ggplot(data = df, aes(x = BUILDING.CLASS.CATEGORY)) + 
+  print(qplot(df$NEIGHBORHOOD))
+  print(qplot(df$BUILDING.CLASS.CATEGORY) )
+  print( ggplot(data = df, aes(x = BUILDING.CLASS.CATEGORY)) + 
     geom_histogram() +
-    theme(axis.text.x = element_text(angle = 90) )
+    theme(axis.text.x = element_text(angle = 90) ))
   
-  qplot(df$TAX.CLASS.AT.PRESENT)
+  print(qplot(df$TAX.CLASS.AT.PRESENT))
   ## Not sure what these are, so ignoring them for now (many, many levels)
 #   qplot(df$BLOCK)
 #   qplot(df$LOT)
   
-  qplot(df$BUILDING.CLASS.AT.PRESENT)
-  qplot(df$ZIP.CODE)
-  qplot(df$RESIDENTIAL.UNITS, binwidth = 1)
-  qplot(df$COMMERCIAL.UNITS, binwidth = 1)
-  qplot(df$TOTAL.UNITS, binwidth = 1)
-  qplot(df$LAND.SQUARE.FEET)
-  qplot(df$YEAR.BUILT, binwidth = 10)
-
-  qplot(df$TAX.CLASS.AT.TIME.OF.SALE)
-  qplot(df$BUILDING.CLASS.AT.TIME.OF.SALE)
-  qplot(df$SALE.DATE)
-  qplot(df[df$SALE.PRICE.N < 1000000, 'SALE.PRICE.N'], binwidth = 10000)  
-  qplot(df[df$SALE.PRICE.N >= 1000000, 'SALE.PRICE.N'], binwidth = 1000000)  
+  print(qplot(df$BUILDING.CLASS.AT.PRESENT))
+  print(qplot(df$ZIP.CODE))
+  print(qplot(df$RESIDENTIAL.UNITS, binwidth = 1))
+  print(qplot(df$COMMERCIAL.UNITS, binwidth = 1))
+  print(qplot(df$TOTAL.UNITS, binwidth = 1))
+  print(qplot(df$LAND.SQUARE.FEET))
+  print(qplot(df$YEAR.BUILT, binwidth = 10))
+  
+  print(qplot(df$TAX.CLASS.AT.TIME.OF.SALE))
+  print(qplot(df$BUILDING.CLASS.AT.TIME.OF.SALE))
+  print(qplot(df$SALE.DATE))
+  print(qplot(df[df$SALE.PRICE.N < 1000000, 'SALE.PRICE.N'], binwidth = 10000)  )
+  print(qplot(df[df$SALE.PRICE.N >= 1000000, 'SALE.PRICE.N'], binwidth = 1000000)  )
 }
 
 DoNeighborhoodComparisons <- function(df){
@@ -177,6 +177,30 @@ DoNeighborhoodComparisons <- function(df){
                   colour = NEIGHBORHOOD)) + 
     # ylim(0, 10000000) + 
     theme(legend.position = 'bottom') + guides(col = guide_legend(ncol = 3))
+  
+  
+  
+}
+
+DoReport <- function(df){
+  bldgClassToKeep  = c("01  ONE FAMILY HOMES", 
+                       "02  TWO FAMILY HOMES", 
+                       "03  THREE FAMILY HOMES", 
+                       "04  TAX CLASS 1 CONDOS", 
+                       "07  RENTALS - WALKUP APARTMENTS", 
+                       "08  RENTALS - ELEVATOR APARTMENTS", 
+                       "09  COOPS - WALKUP APARTMENTS", 
+                       "10  COOPS - ELEVATOR APARTMENTS", 
+                       "11A CONDO-RENTALS", 
+                       "12  CONDOS - WALKUP APARTMENTS", 
+                       "13  CONDOS - ELEVATOR APARTMENTS", 
+                       "14  RENTALS - 4-10 UNIT", 
+                       "15  CONDOS - 2-10 UNIT RESIDENTIAL", 
+                       "16  CONDOS - 2-10 UNIT WITH COMMERCIAL UNIT", 
+                       "17  CONDOPS"
+  )
+  
+  df2 <- df[df$BUILDING.CLASS.CATEGORY %in% bldgClassToKeep, ]
   
   
   
