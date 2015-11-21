@@ -13,6 +13,8 @@ LoadLibraries <- function(){
   library(ggplot2)
   library(plyr)
   library(dplyr)
+  library(class)
+  library(gmodels)
 }
 
 LoadData <- function(folder = data_folder, file = data_file){
@@ -273,6 +275,87 @@ DoReport <- function(df){
   summary(model4)
   plot(resid(model4))
 
+}
+
+DoKnn <- function(df){
+  #"                         ", z
+  all.neighborhoods <- c("ALPHABET CITY            ", 
+    "CHELSEA                  ", "CHINATOWN                ", "CIVIC CENTER             ", 
+    "CLINTON                  ", "EAST VILLAGE             ", "FASHION                  ", 
+    "FINANCIAL                ", "FLATIRON                 ", "GRAMERCY                 ", 
+    "GREENWICH VILLAGE-CENTRAL", "GREENWICH VILLAGE-WEST   ", "HARLEM-CENTRAL           ", 
+    "HARLEM-EAST              ", "HARLEM-UPPER             ", "HARLEM-WEST              ", 
+    "INWOOD                   ", "JAVITS CENTER            ", "KIPS BAY                 ", 
+    "LITTLE ITALY             ", "LOWER EAST SIDE          ", "MANHATTAN VALLEY         ", 
+    "MANHATTAN-UNKNOWN        ", "MIDTOWN CBD              ", "MIDTOWN EAST             ", 
+    "MIDTOWN WEST             ", "MORNINGSIDE HEIGHTS      ", "MURRAY HILL              ", 
+    "SOHO                     ", "SOUTHBRIDGE              ", "TRIBECA                  ", 
+    "UPPER EAST SIDE (59-79)  ", "UPPER EAST SIDE (79-96)  ", "UPPER EAST SIDE (96-110) ", 
+    "UPPER WEST SIDE (59-79)  ", "UPPER WEST SIDE (79-96)  ", "UPPER WEST SIDE (96-116) ", 
+    "WASHINGTON HEIGHTS LOWER ", "WASHINGTON HEIGHTS UPPER ")
+  
+  neighborhoods <- c("UPPER EAST SIDE (59-79)  ", 
+                     "UPPER EAST SIDE (79-96)  ", 
+                     "UPPER EAST SIDE (96-110) ", 
+                     "UPPER WEST SIDE (59-79)  ", 
+                     "UPPER WEST SIDE (79-96)  ", 
+                     "UPPER WEST SIDE (96-116) ", 
+                     "WASHINGTON HEIGHTS LOWER ", 
+                     "WASHINGTON HEIGHTS UPPER ")
+  
+  
+ # df2 <- df[which(trim(df$NEIGHBORHOOD) != ""),]
+  
+  df2 <- df[which(df$NEIGHBORHOOD %in% neighborhoods),]
+  
+  
+  features <- c(
+                "BLOCK",
+                "LOT", 
+                "BUILDING.CLASS.AT.PRESENT", 
+                "ADDRESS", 
+                "APART.MENT.NUMBER", 
+                "ZIP.CODE", 
+                "RESIDENTIAL.UNITS", 
+                "COMMERCIAL.UNITS", 
+                "TOTAL.UNITS", 
+                "LAND.SQUARE.FEET", 
+                "GROSS.SQUARE.FEET", 
+                "YEAR.BUILT", 
+                "TAX.CLASS.AT.TIME.OF.SALE", 
+                "BUILDING.CLASS.AT.TIME.OF.SALE", 
+                "SALE.DATE", 
+                "SALE.PRICE.N", "BUILDING.CLASS.CATEGORY", 
+                "TAX.CLASS.AT.PRESENT", )
+  
+ 
+ numeric.features <- c(
+   "BLOCK",
+   "LOT", 
+   "RESIDENTIAL.UNITS", 
+   "COMMERCIAL.UNITS", 
+   "TOTAL.UNITS", 
+   "LAND.SQUARE.FEET", 
+   "GROSS.SQUARE.FEET", 
+   "YEAR.BUILT",  
+   "SALE.DATE", 
+   "SALE.PRICE.N")
+ 
+  ## Specify test and train sets
+  test.inds <- sample(1:nrow(df2), 0.3 * nrow(df2), replace = FALSE)
+  test <- subset(df2[test.inds,])
+  train.inds <- setdiff(1:nrow(df2), test.inds)
+  train <- subset(df2[train.inds,])
+
+  for (k in 1:20){
+    k1 <- knn(train[, features], test[, features], df2$NEIGHBORHOOD[train.inds], 
+              k = k, use.all = FALSE)
+   
+   num.incorrect <- sum(k1 != df2$NEIGHBORHOOD[test.inds])
+   miscalc.rate <- num.incorrect / length(k1)
+   
+   print(paste(k, miscalc.rate, num.incorrect, sep = ': '))
+  }
 }
 
 
